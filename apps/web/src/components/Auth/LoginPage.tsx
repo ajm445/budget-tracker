@@ -1,0 +1,294 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
+
+const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+
+  // 이미 로그인된 사용자는 메인 페이지로 리디렉션
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleEmailLogin = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    setLoading('email');
+    setError(null);
+
+    try {
+      const { error: signInError } = await signInWithEmail(email, password);
+
+      if (signInError) {
+        setError('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+        console.error('Email login error:', signInError);
+        setLoading(null);
+      }
+      // 로그인 성공 시 AuthContext의 onAuthStateChange가 자동으로 리디렉션 처리
+      // setLoading(null)을 호출하지 않음 - 리디렉션될 때까지 스피너 유지
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('예상치 못한 오류가 발생했습니다.');
+      setLoading(null);
+    }
+  };
+
+  const handleEmailSignup = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    setLoading('email');
+    setError(null);
+
+    if (!username.trim()) {
+      setError('아이디를 입력해주세요.');
+      setLoading(null);
+      return;
+    }
+
+    const { error: signUpError } = await signUpWithEmail(email, password, username);
+
+    if (signUpError) {
+      setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+      console.error('Email signup error:', signUpError);
+    } else {
+      setError(null);
+      // 회원가입 성공 메시지
+      toast.success('회원가입이 완료되었습니다. 로그인해주세요.');
+      setMode('signin');
+    }
+
+    setLoading(null);
+  };
+
+  const handleGoogleLogin = async (): Promise<void> => {
+    setLoading('google');
+    setError(null);
+
+    const { error: signInError } = await signInWithGoogle();
+
+    if (signInError) {
+      setError('Google 로그인에 실패했습니다. 다시 시도해주세요.');
+      console.error('Google login error:', signInError);
+    }
+
+    setLoading(null);
+  };
+
+  const handleGoHome = (): void => {
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-colors duration-300">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50 p-8 w-full max-w-md relative transition-colors duration-300">
+        {/* 홈으로 가기 버튼 */}
+        <button
+          onClick={handleGoHome}
+          className="absolute top-4 left-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-2 transition-colors text-sm"
+          aria-label="홈페이지로 돌아가기"
+        >
+          ← 홈으로
+        </button>
+
+        {/* 로고 및 타이틀 */}
+        <div className="text-center mb-8 mt-4">
+          <div className="w-16 h-16 bg-indigo-600 dark:bg-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors duration-300">
+            <span className="text-3xl">✈️</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+            일본 워킹홀리데이 가계부
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
+            소셜 계정으로 간편하게 시작하세요
+          </p>
+        </div>
+
+        {/* 탭 전환 */}
+        <div className="flex gap-2 mb-6" role="tablist" aria-label="로그인 방식 선택">
+          <button
+            onClick={() => setMode('signin')}
+            className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+              mode === 'signin'
+                ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+            role="tab"
+            aria-selected={mode === 'signin'}
+            aria-controls="login-form"
+          >
+            로그인
+          </button>
+          <button
+            onClick={() => setMode('signup')}
+            className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+              mode === 'signup'
+                ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+            role="tab"
+            aria-selected={mode === 'signup'}
+            aria-controls="login-form"
+          >
+            회원가입
+          </button>
+        </div>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <div
+            className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg transition-colors duration-300"
+            role="alert"
+            aria-live="polite"
+          >
+            <p className="text-sm text-red-800 dark:text-red-300 transition-colors duration-300">{error}</p>
+          </div>
+        )}
+
+        {/* 이메일/비밀번호 로그인 폼 */}
+        <form
+          id="login-form"
+          onSubmit={mode === 'signin' ? handleEmailLogin : handleEmailSignup}
+          className="space-y-4 mb-6"
+          role="tabpanel"
+          aria-label={mode === 'signin' ? '로그인 폼' : '회원가입 폼'}
+        >
+          {mode === 'signup' && (
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">
+                아이디
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
+                placeholder="사용할 아이디를 입력하세요"
+                required={mode === 'signup'}
+              />
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">
+              이메일
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
+              placeholder="example@email.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">
+              비밀번호
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading === 'email'}
+            className="w-full py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={mode === 'signin' ? '이메일로 로그인' : '이메일로 회원가입'}
+          >
+            {loading === 'email' ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                <span className="sr-only">로딩 중...</span>
+              </>
+            ) : (
+              mode === 'signin' ? '로그인' : '회원가입'
+            )}
+          </button>
+        </form>
+
+        {/* 구분선 */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600 transition-colors duration-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors duration-300">또는</span>
+          </div>
+        </div>
+
+        {/* 소셜 로그인 버튼 */}
+        <div className="space-y-3">
+          {/* Google 로그인 */}
+          <button
+            onClick={() => void handleGoogleLogin()}
+            disabled={loading !== null}
+            className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Google 계정으로 로그인"
+          >
+            {loading === 'google' ? (
+              <>
+                <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+                <span className="sr-only">Google 로그인 중...</span>
+              </>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+            )}
+            <span>Google로 계속하기</span>
+          </button>
+        </div>
+
+        {/* 약관 동의 */}
+        <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          로그인하면{' '}
+          <a href="/terms" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+            서비스 약관
+          </a>
+          과{' '}
+          <a href="/privacy" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+            개인정보 처리방침
+          </a>
+          에 동의하는 것으로 간주됩니다.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
