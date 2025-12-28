@@ -37,3 +37,22 @@ dist/stats.html
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Turborepo
+.turbo/
+
+# Expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Metro bundler
+.metro-health-check*
+
+# Windows
+nul
+Thumbs.db
