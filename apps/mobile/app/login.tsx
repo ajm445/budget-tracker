@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
 import { supabase } from '../src/lib/supabase';
+import type { ProfileUpdate } from '../../../packages/shared/src/types/database';
 
 export default function LoginScreen() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -69,9 +70,10 @@ export default function LoginScreen() {
       });
     } else if (data.user) {
       // Update username in profiles
+      const updateData: ProfileUpdate = { username };
       await supabase
         .from('profiles')
-        .update({ username })
+        .update(updateData as never)
         .eq('id', data.user.id);
 
       Toast.show({

@@ -1,22 +1,15 @@
-import { Stack } from 'expo-router';
+import '../global.css';
+import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <View style={{ flex: 1 }}>
       <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
+      <Slot />
       <Toast />
-    </SafeAreaProvider>
+    </View>
   );
 }

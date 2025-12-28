@@ -14,7 +14,10 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
-// 공유 패키지 resolve
-config.resolver.disableHierarchicalLookup = true;
+// React 단일 인스턴스 강제 (중복 React 문제 해결)
+config.resolver.extraNodeModules = {
+  react: path.resolve(monorepoRoot, 'node_modules/react'),
+  'react-native': path.resolve(monorepoRoot, 'node_modules/react-native'),
+};
 
 module.exports = withNativeWind(config, { input: './global.css' });
