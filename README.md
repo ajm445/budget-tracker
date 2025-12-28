@@ -1,18 +1,22 @@
-# React Webapp - 개인 재무 관리 애플리케이션
+# Budget Tracker - 개인 재무 관리 애플리케이션
 
-> React + TypeScript + Supabase 기반의 개인 재무 관리 웹 애플리케이션
+> React + React Native + TypeScript + Supabase 기반의 개인 재무 관리 웹 & 모바일 애플리케이션
 
-[![React](https://img.shields.io/badge/React-19.1.1-61DAFB?logo=react)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19.1.0-61DAFB?logo=react)](https://react.dev/)
+[![React Native](https://img.shields.io/badge/React_Native-0.81.5-61DAFB?logo=react)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-SDK_54-000020?logo=expo)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.1.7-646CFF?logo=vite)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-2.75.1-3ECF8E?logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.0-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.0.0-F69220?logo=pnpm)](https://pnpm.io/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-2.0.0-EF4444?logo=turborepo)](https://turbo.build/)
 
 ## 📋 목차
 
 - [주요 기능](#주요-기능)
 - [기술 스택](#기술-스택)
 - [시작하기](#시작하기)
+- [앱 실행하기](#앱-실행하기)
 - [환경 변수 설정](#환경-변수-설정)
 - [개발](#개발)
 - [빌드 및 배포](#빌드-및-배포)
@@ -59,10 +63,11 @@
 - **완료 상태 관리** - 목표 달성 시 완료 처리
 
 ### 대시보드 및 통계
-- **4가지 뷰 모드**
+- **5가지 뷰 모드**
   - 📊 요약: 월별 수입/지출/잔액 카드
   - 📅 캘린더: 일별 거래 내역 달력 형식 표시
   - 💳 고정지출: 고정지출 및 카테고리 예산 관리
+  - 🎯 저축목표: 저축 목표 관리
   - 📈 통계: 상세 분석 및 차트
 
 - **통계 분석**
@@ -100,7 +105,11 @@
 
 ## 🛠 기술 스택
 
-### Frontend
+### 모노레포 구조
+- **pnpm Workspaces** - 패키지 관리
+- **Turborepo** - 빌드 시스템 및 캐싱
+
+### Web (apps/web)
 - **React 19.1.1** - UI 라이브러리
 - **TypeScript 5.8.3** - 타입 안전성
 - **Vite 7.1.7** - 빌드 도구 및 개발 서버
@@ -109,6 +118,18 @@
 - **Recharts 3.2.1** - 데이터 시각화 (차트)
 - **Lucide React** - 아이콘 라이브러리
 - **React Hot Toast** - 알림 시스템
+
+### Mobile (apps/mobile)
+- **React Native 0.81.5** - 크로스 플랫폼 모바일
+- **Expo SDK 54** - React Native 개발 플랫폼
+- **Expo Router 6.x** - 파일 기반 라우팅
+- **NativeWind 4.0** - Tailwind CSS for React Native
+- **Victory Native** - 모바일 차트 라이브러리
+- **React Native Reanimated** - 애니메이션
+
+### Shared (packages/shared)
+- **TypeScript 타입 정의** - 웹/모바일 공유 타입
+- **유틸리티 함수** - 계산, 날짜 처리 등
 
 ### Backend & Database
 - **Supabase** - BaaS (Backend as a Service)
@@ -135,44 +156,103 @@
 ### 사전 요구사항
 
 - **Node.js** 18.0.0 이상
-- **npm** 9.0.0 이상
+- **pnpm** 9.0.0 이상
 - **Supabase 계정** (무료 계정 가능)
+- **Expo Go 앱** (모바일 테스트용, SDK 54)
 
 ### 설치
 
 1. **저장소 클론**
    ```bash
    git clone <repository-url>
-   cd working
+   cd budget-tracker
    ```
 
-2. **의존성 설치**
+2. **pnpm 설치** (없는 경우)
    ```bash
-   npm install
+   npm install -g pnpm
    ```
 
-3. **환경 변수 설정**
+3. **의존성 설치**
    ```bash
+   pnpm install
+   ```
+
+4. **환경 변수 설정**
+   ```bash
+   # 루트 환경 변수 (웹용)
    cp .env.example .env
+
+   # 모바일 환경 변수
+   cp apps/mobile/.env.example apps/mobile/.env
    ```
-   `.env` 파일을 열고 실제 값으로 변경:
+
+   `.env` 파일들을 열고 실제 값으로 변경:
    ```env
+   # 웹 (.env)
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
    VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
    VITE_APP_ENV=development
+
+   # 모바일 (apps/mobile/.env)
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
    ```
 
-4. **개발 서버 실행**
-   ```bash
-   npm run dev
-   ```
-   브라우저에서 `http://localhost:5173` 접속
+## 📱 앱 실행하기
+
+### 웹 앱 실행
+
+```bash
+# 루트 디렉토리에서
+pnpm dev:web
+
+# 또는 apps/web 디렉토리에서
+cd apps/web
+pnpm dev
+```
+
+브라우저에서 `http://localhost:5173` 접속
+
+### 모바일 앱 실행
+
+```bash
+# 루트 디렉토리에서
+pnpm dev:mobile
+
+# 또는 apps/mobile 디렉토리에서
+cd apps/mobile
+node ../../node_modules/expo/bin/cli start --tunnel --clear
+```
+
+Expo Go 앱에서 QR 코드 스캔하여 접속
+
+### 전체 앱 동시 실행
+
+```bash
+pnpm dev
+```
+
+### 사용 가능한 루트 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `pnpm dev` | 모든 앱 동시 실행 |
+| `pnpm dev:web` | 웹 앱만 실행 |
+| `pnpm dev:mobile` | 모바일 앱만 실행 |
+| `pnpm build` | 모든 앱 빌드 |
+| `pnpm build:web` | 웹 앱만 빌드 |
+| `pnpm lint` | 모든 앱 린팅 |
+| `pnpm typecheck` | 타입 검사 |
+| `pnpm clean` | 캐시 및 빌드 정리 |
+| `pnpm format` | 코드 포맷팅 |
 
 ## 🔐 환경 변수 설정
 
 ### 필수 환경 변수
 
+#### 웹 앱 (.env)
 | 변수명 | 설명 | 예시 |
 |--------|------|------|
 | `VITE_SUPABASE_URL` | Supabase 프로젝트 URL | `https://abcdefg.supabase.co` |
@@ -180,13 +260,19 @@
 | `VITE_APP_ENV` | 앱 환경 | `development` / `production` |
 | `VITE_GA_MEASUREMENT_ID` | Google Analytics ID (선택) | `G-XXXXXXXXXX` |
 
+#### 모바일 앱 (apps/mobile/.env)
+| 변수명 | 설명 | 예시 |
+|--------|------|------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | `https://abcdefg.supabase.co` |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon/Public Key | `eyJhbGc...` |
+
 ### Supabase 설정 방법
 
 1. [Supabase](https://supabase.com/) 로그인
 2. 새 프로젝트 생성
 3. **Settings** > **API**에서 다음 정보 복사:
-   - **Project URL** → `VITE_SUPABASE_URL`
-   - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
+   - **Project URL** → `VITE_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_URL`
+   - **anon/public key** → `VITE_SUPABASE_ANON_KEY` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
 ### 데이터베이스 스키마 설정
 
@@ -284,53 +370,64 @@ CREATE TABLE savings_goals (
 
 ## 💻 개발
 
-### 사용 가능한 명령어
+### 웹 앱 명령어 (apps/web)
 
 ```bash
+cd apps/web
+
 # 개발 서버 실행
-npm run dev
+pnpm dev
 
 # 프로덕션 빌드
-npm run build
-
-# 번들 분석과 함께 빌드
-npm run build:analyze
+pnpm build
 
 # 빌드 결과 미리보기
-npm run preview
+pnpm preview
 
 # 단위 테스트 실행
-npm run test
+pnpm test
 
 # 테스트 UI
-npm run test:ui
+pnpm test:ui
 
 # 테스트 커버리지
-npm run test:coverage
+pnpm test:coverage
 
 # E2E 테스트
-npm run test:e2e
-
-# E2E 테스트 (UI 모드)
-npm run test:e2e:ui
+pnpm test:e2e
 
 # 린팅 (코드 검사)
-npm run lint
-
-# 린팅 및 자동 수정
-npm run lint:fix
-
-# 코드 포맷팅
-npm run format
-
-# 코드 포맷 검사
-npm run format:check
+pnpm lint
 
 # 타입 검사
-npm run type-check
+pnpm typecheck
+```
 
-# 캐시 정리
-npm run clean
+### 모바일 앱 명령어 (apps/mobile)
+
+```bash
+cd apps/mobile
+
+# Expo 개발 서버 실행
+node ../../node_modules/expo/bin/cli start
+
+# 터널 모드로 실행 (외부 네트워크 접속)
+node ../../node_modules/expo/bin/cli start --tunnel
+
+# 캐시 클리어 후 실행
+node ../../node_modules/expo/bin/cli start --clear
+
+# Android 빌드
+pnpm build:android
+
+# iOS 빌드
+pnpm build:ios
+
+# 린팅
+pnpm lint
+
+# 타입 검사
+pnpm typecheck
 ```
 
 ### 개발 워크플로우
@@ -338,39 +435,47 @@ npm run clean
 1. **새 기능 개발**
    ```bash
    git checkout -b feature/new-feature
-   npm run dev
+   pnpm dev
    ```
 
 2. **코드 품질 확인**
    ```bash
-   npm run lint
-   npm run type-check
-   npm run format:check
-   npm run test
+   pnpm lint
+   pnpm typecheck
    ```
 
 3. **빌드 테스트**
    ```bash
-   npm run build
-   npm run preview
+   pnpm build
    ```
 
 ## 📦 빌드 및 배포
 
-### 프로덕션 빌드
+### 웹 앱 프로덕션 빌드
 
 ```bash
-npm run build
+pnpm build:web
 ```
 
-빌드 결과는 `dist/` 디렉토리에 생성됩니다.
+빌드 결과는 `apps/web/dist/` 디렉토리에 생성됩니다.
 
-### 배포
+### 모바일 앱 빌드
+
+```bash
+cd apps/mobile
+
+# EAS 빌드 (Expo Application Services)
+pnpm build:android  # Android APK/AAB
+pnpm build:ios      # iOS IPA
+```
+
+### 웹 앱 배포
 
 #### Vercel 배포
 
 ```bash
 npm install -g vercel
+cd apps/web
 vercel
 ```
 
@@ -378,6 +483,7 @@ vercel
 
 ```bash
 npm install -g netlify-cli
+cd apps/web
 netlify deploy --prod
 ```
 
@@ -386,7 +492,8 @@ netlify deploy --prod
 1. Render 대시보드에서 **New Static Site** 선택
 2. GitHub 저장소 연결
 3. 빌드 설정:
-   - **Build Command**: `npm run build`
+   - **Root Directory**: `apps/web`
+   - **Build Command**: `pnpm build`
    - **Publish Directory**: `dist`
 4. 환경 변수 추가:
    - `VITE_SUPABASE_URL`
@@ -397,61 +504,85 @@ netlify deploy --prod
 
 ```
 budget-tracker/
-├── src/
-│   ├── components/          # React 컴포넌트
-│   │   ├── Auth/           # 인증 관련 (로그인, 계정 관리)
-│   │   ├── Dashboard/      # 대시보드 (잔액 카드, 현재 시간)
-│   │   ├── Calendar/       # 캘린더 뷰 (일별 거래 내역)
-│   │   ├── Statistics/     # 통계 및 차트
-│   │   ├── TransactionForm/# 거래 입력 폼
-│   │   ├── TransactionList/# 거래 내역 목록 및 검색
-│   │   ├── RecurringExpenses/ # 고정지출 및 예산 관리
-│   │   ├── SavingsGoals/   # 저축 목표 관리
-│   │   ├── Legal/          # 약관 및 정책
-│   │   └── ui/             # 재사용 가능한 UI 컴포넌트
-│   ├── contexts/           # React Context (상태 관리)
-│   │   ├── AuthContext.tsx # 인증 상태
-│   │   ├── AnalyticsContext.tsx # GA4 분석
-│   │   └── ThemeContext.tsx # 테마 관리
-│   ├── hooks/              # Custom React Hooks
-│   │   ├── useAnalyticsEvent.ts # GA4 이벤트 추적
-│   │   └── useSwipe.ts     # 스와이프 제스처
-│   ├── lib/                # 외부 라이브러리 설정
-│   │   └── supabase.ts     # Supabase 클라이언트
-│   ├── services/           # API 서비스
-│   │   ├── transactionService.ts # 거래 CRUD
-│   │   ├── recurringExpenseService.ts # 고정지출 CRUD
-│   │   ├── categoryBudgetService.ts # 예산 CRUD
-│   │   └── savingsGoalService.ts # 저축 목표 CRUD
-│   ├── types/              # TypeScript 타입 정의
-│   │   ├── database.ts     # Supabase DB 타입
-│   │   ├── transaction.ts  # 거래 타입
-│   │   ├── calendar.ts     # 캘린더 타입
-│   │   ├── statistics.ts   # 통계 타입
-│   │   ├── savingsGoal.ts  # 저축 목표 타입
-│   │   └── analytics.ts    # GA4 분석 타입
-│   ├── utils/              # 유틸리티 함수
-│   │   ├── calculations.ts # 재무 계산 로직
-│   │   ├── statistics.ts   # 통계 생성 로직
-│   │   ├── calendar.ts     # 캘린더 데이터 생성
-│   │   ├── dateUtils.ts    # 날짜 처리 (KST/JST 지원)
-│   │   ├── searchUtils.ts  # 검색 유틸리티
-│   │   └── localStorageBudget.ts # 비로그인 예산 저장
-│   ├── constants/          # 상수 정의
-│   │   └── routes.ts       # 라우트 경로
-│   ├── App.tsx             # 메인 앱 컴포넌트
-│   ├── MainApp.tsx         # 로그인 후 메인 화면
-│   └── main.tsx            # 앱 진입점
+├── apps/
+│   ├── web/                      # React 웹 앱
+│   │   ├── src/
+│   │   │   ├── components/       # React 컴포넌트
+│   │   │   │   ├── Auth/         # 인증 관련
+│   │   │   │   ├── Dashboard/    # 대시보드
+│   │   │   │   ├── Calendar/     # 캘린더 뷰
+│   │   │   │   ├── Statistics/   # 통계 및 차트
+│   │   │   │   ├── TransactionForm/
+│   │   │   │   ├── TransactionList/
+│   │   │   │   ├── RecurringExpenses/
+│   │   │   │   ├── SavingsGoals/
+│   │   │   │   ├── Legal/
+│   │   │   │   └── ui/
+│   │   │   ├── contexts/         # React Context
+│   │   │   ├── hooks/            # Custom Hooks
+│   │   │   ├── lib/              # 라이브러리 설정
+│   │   │   ├── services/         # API 서비스
+│   │   │   ├── types/            # TypeScript 타입
+│   │   │   ├── utils/            # 유틸리티 함수
+│   │   │   └── constants/        # 상수
+│   │   ├── public/
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   └── tailwind.config.js
+│   │
+│   └── mobile/                   # React Native 모바일 앱
+│       ├── app/                  # Expo Router (파일 기반 라우팅)
+│       │   ├── _layout.tsx       # 루트 레이아웃
+│       │   ├── index.tsx         # 홈 (인증 체크)
+│       │   ├── login.tsx         # 로그인 화면
+│       │   ├── (tabs)/           # 탭 네비게이션
+│       │   │   ├── _layout.tsx
+│       │   │   ├── summary.tsx
+│       │   │   ├── calendar.tsx
+│       │   │   ├── recurring.tsx
+│       │   │   ├── savings.tsx
+│       │   │   └── statistics.tsx
+│       │   └── auth/
+│       │       └── callback.tsx  # OAuth 콜백
+│       ├── src/
+│       │   ├── components/       # 모바일 전용 컴포넌트
+│       │   ├── contexts/         # 모바일용 Context
+│       │   └── lib/
+│       │       └── supabase.ts   # AsyncStorage 사용
+│       ├── global.css            # NativeWind 스타일
+│       ├── app.json              # Expo 설정
+│       ├── babel.config.js
+│       ├── metro.config.js
+│       ├── tailwind.config.js
+│       └── package.json
+│
+├── packages/
+│   └── shared/                   # 공유 코드 패키지
+│       ├── src/
+│       │   ├── types/            # 공유 TypeScript 타입
+│       │   │   ├── database.ts   # Supabase DB 타입
+│       │   │   ├── transaction.ts
+│       │   │   ├── calendar.ts
+│       │   │   ├── statistics.ts
+│       │   │   ├── savingsGoal.ts
+│       │   │   └── analytics.ts
+│       │   └── utils/            # 공유 유틸리티 함수
+│       │       ├── calculations.ts
+│       │       ├── dateUtils.ts
+│       │       ├── calendar.ts
+│       │       └── statistics.ts
+│       └── package.json
+│
 ├── supabase/
-│   └── migrations/         # 데이터베이스 마이그레이션 파일
-├── public/                 # 정적 파일
-├── .env.example            # 환경 변수 템플릿
-├── package.json            # 프로젝트 메타데이터
-├── tsconfig.json           # TypeScript 설정
-├── vite.config.ts          # Vite 설정
-├── tailwind.config.js      # Tailwind CSS 설정
-├── vitest.config.ts        # Vitest 설정
-└── playwright.config.ts    # Playwright 설정
+│   └── migrations/               # 데이터베이스 마이그레이션
+│
+├── .env                          # 웹 환경 변수
+├── .env.example                  # 환경 변수 템플릿
+├── .npmrc                        # pnpm 설정 (hoisted mode)
+├── package.json                  # 루트 패키지
+├── pnpm-workspace.yaml           # pnpm 워크스페이스 설정
+├── turbo.json                    # Turborepo 설정
+└── README.md
 ```
 
 ## 🔧 주요 기능 상세 설명
@@ -539,4 +670,4 @@ budget-tracker/
 
 ---
 
-**Made with ❤️ using React + Supabase**
+**Made with ❤️ using React + React Native + Supabase**
