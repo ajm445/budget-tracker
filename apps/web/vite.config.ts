@@ -2,12 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import viteCompression from 'vite-plugin-compression';
+import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
 
   return {
+    // 모노레포 루트의 .env 파일을 읽도록 설정
+    envDir: path.resolve(__dirname, '../..'),
+
     plugins: [
       react(),
       // Gzip 압축 (프로덕션 전용)
