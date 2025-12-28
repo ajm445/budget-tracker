@@ -52,6 +52,12 @@
 - **시각적 피드백** - 예산 초과 시 색상 변경 및 경고 표시
 - **비로그인 지원** - localStorage 기반 월별 예산 관리
 
+### 저축 목표 관리
+- **목표 설정** - 저축 목표 금액 및 기한 설정
+- **진행률 추적** - 현재 저축 금액 대비 목표 달성률 표시
+- **카테고리 분류** - 저축 목표별 카테고리 지정
+- **완료 상태 관리** - 목표 달성 시 완료 처리
+
 ### 대시보드 및 통계
 - **4가지 뷰 모드**
   - 📊 요약: 월별 수입/지출/잔액 카드
@@ -184,136 +190,97 @@
 
 ### 데이터베이스 스키마 설정
 
-Supabase SQL Editor에서 다음 테이블 생성:
+이 프로젝트는 `supabase/migrations/` 폴더에 마이그레이션 파일이 준비되어 있습니다.
+Supabase MCP 또는 Supabase CLI를 사용하여 마이그레이션을 적용하세요.
+
+**마이그레이션 파일 목록:**
+1. `00001_create_functions.sql` - 트리거용 함수들
+2. `00002_create_profiles_table.sql` - 사용자 프로필 테이블
+3. `00003_create_transactions_table.sql` - 거래 내역 테이블
+4. `00004_create_recurring_expenses_table.sql` - 고정지출 테이블
+5. `00005_create_category_budgets_table.sql` - 카테고리 예산 테이블
+6. `00006_create_savings_goals_table.sql` - 저축 목표 테이블
+7. `00007_create_indexes.sql` - 성능 최적화 인덱스
+8. `00008_create_rls_policies.sql` - Row Level Security 정책
+9. `00009_create_triggers.sql` - 자동 업데이트 트리거
+
+**테이블 구조:**
 
 ```sql
 -- profiles 테이블 (사용자 프로필)
 CREATE TABLE profiles (
-  id UUID REFERENCES auth.users PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  username TEXT,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE,
+  username TEXT UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
-  provider TEXT,
+  provider TEXT CHECK (provider IN ('google', 'line', 'email')),
   provider_id TEXT,
-  settings JSONB DEFAULT '{}'::jsonb,
+  settings JSONB DEFAULT '{"theme": "light", "language": "ko", ...}'::jsonb,
   is_active BOOLEAN DEFAULT true,
   last_sign_in_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- transactions 테이블 (거래 내역)
 CREATE TABLE transactions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-  amount NUMERIC NOT NULL,
+  amount NUMERIC NOT NULL CHECK (amount > 0),
   category TEXT NOT NULL,
   description TEXT NOT NULL,
   date TEXT NOT NULL,
-  currency TEXT NOT NULL CHECK (currency IN ('KRW', 'USD', 'JPY')),
-  amount_in_krw NUMERIC NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- recurring_expenses 테이블 (고정지출)
 CREATE TABLE recurring_expenses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  amount NUMERIC NOT NULL,
-  currency TEXT NOT NULL CHECK (currency IN ('KRW', 'USD', 'JPY')),
-  amount_in_krw NUMERIC NOT NULL,
-  category TEXT NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  day_of_month INTEGER NOT NULL CHECK (day_of_month BETWEEN 1 AND 31),
+  amount NUMERIC NOT NULL CHECK (amount >= 0),
+  category TEXT NOT NULL DEFAULT '기타',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  day_of_month INTEGER NOT NULL DEFAULT 1 CHECK (day_of_month >= 1 AND day_of_month <= 31),
   description TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- category_budgets 테이블 (카테고리 예산)
+-- category_budgets 테이블 (카테고리별 월별 예산)
 CREATE TABLE category_budgets (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   category TEXT NOT NULL,
   budget_amount NUMERIC NOT NULL,
-  currency TEXT NOT NULL CHECK (currency IN ('KRW', 'USD', 'JPY')),
-  budget_amount_in_krw NUMERIC NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, category)
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL CHECK (month >= 1 AND month <= 12),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, category, year, month)
 );
 
--- RLS (Row Level Security) 활성화
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE recurring_expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE category_budgets ENABLE ROW LEVEL SECURITY;
-
--- profiles 정책
-CREATE POLICY "Users can view their own profile"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
-
--- transactions 정책
-CREATE POLICY "Users can view their own transactions"
-  ON transactions FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own transactions"
-  ON transactions FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own transactions"
-  ON transactions FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own transactions"
-  ON transactions FOR DELETE
-  USING (auth.uid() = user_id);
-
--- recurring_expenses 정책
-CREATE POLICY "Users can view their own recurring expenses"
-  ON recurring_expenses FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own recurring expenses"
-  ON recurring_expenses FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own recurring expenses"
-  ON recurring_expenses FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own recurring expenses"
-  ON recurring_expenses FOR DELETE
-  USING (auth.uid() = user_id);
-
--- category_budgets 정책
-CREATE POLICY "Users can view their own category budgets"
-  ON category_budgets FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own category budgets"
-  ON category_budgets FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own category budgets"
-  ON category_budgets FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own category budgets"
-  ON category_budgets FOR DELETE
-  USING (auth.uid() = user_id);
+-- savings_goals 테이블 (저축 목표)
+CREATE TABLE savings_goals (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  target_amount NUMERIC NOT NULL,
+  current_amount NUMERIC DEFAULT 0,
+  deadline DATE,
+  category TEXT,
+  description TEXT,
+  is_completed BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
+
+모든 테이블에는 RLS(Row Level Security)가 활성화되어 있으며, 사용자는 자신의 데이터만 조회/수정/삭제할 수 있습니다
 
 ## 💻 개발
 
@@ -429,50 +396,55 @@ netlify deploy --prod
 ## 📁 프로젝트 구조
 
 ```
-working/
+budget-tracker/
 ├── src/
 │   ├── components/          # React 컴포넌트
 │   │   ├── Auth/           # 인증 관련 (로그인, 계정 관리)
-│   │   ├── Dashboard/      # 대시보드 (잔액 카드, 통화 선택)
+│   │   ├── Dashboard/      # 대시보드 (잔액 카드, 현재 시간)
 │   │   ├── Calendar/       # 캘린더 뷰 (일별 거래 내역)
 │   │   ├── Statistics/     # 통계 및 차트
 │   │   ├── TransactionForm/# 거래 입력 폼
-│   │   ├── TransactionList/# 거래 내역 목록
+│   │   ├── TransactionList/# 거래 내역 목록 및 검색
 │   │   ├── RecurringExpenses/ # 고정지출 및 예산 관리
+│   │   ├── SavingsGoals/   # 저축 목표 관리
 │   │   ├── Legal/          # 약관 및 정책
-│   │   ├── Navigation/     # 네비게이션
 │   │   └── ui/             # 재사용 가능한 UI 컴포넌트
 │   ├── contexts/           # React Context (상태 관리)
 │   │   ├── AuthContext.tsx # 인증 상태
-│   │   ├── CurrencyContext.tsx # 환율 관리
+│   │   ├── AnalyticsContext.tsx # GA4 분석
 │   │   └── ThemeContext.tsx # 테마 관리
 │   ├── hooks/              # Custom React Hooks
-│   │   ├── useCurrency.ts  # 통화 관리
-│   │   ├── useCurrencyConversion.ts # 환율 변환
-│   │   └── useTheme.ts     # 테마 전환
+│   │   ├── useAnalyticsEvent.ts # GA4 이벤트 추적
+│   │   └── useSwipe.ts     # 스와이프 제스처
 │   ├── lib/                # 외부 라이브러리 설정
 │   │   └── supabase.ts     # Supabase 클라이언트
 │   ├── services/           # API 서비스
 │   │   ├── transactionService.ts # 거래 CRUD
 │   │   ├── recurringExpenseService.ts # 고정지출 CRUD
-│   │   └── categoryBudgetService.ts # 예산 CRUD
+│   │   ├── categoryBudgetService.ts # 예산 CRUD
+│   │   └── savingsGoalService.ts # 저축 목표 CRUD
 │   ├── types/              # TypeScript 타입 정의
 │   │   ├── database.ts     # Supabase DB 타입
 │   │   ├── transaction.ts  # 거래 타입
 │   │   ├── calendar.ts     # 캘린더 타입
-│   │   └── statistics.ts   # 통계 타입
+│   │   ├── statistics.ts   # 통계 타입
+│   │   ├── savingsGoal.ts  # 저축 목표 타입
+│   │   └── analytics.ts    # GA4 분석 타입
 │   ├── utils/              # 유틸리티 함수
-│   │   ├── currency.ts     # 환율 변환 및 포맷팅
 │   │   ├── calculations.ts # 재무 계산 로직
 │   │   ├── statistics.ts   # 통계 생성 로직
 │   │   ├── calendar.ts     # 캘린더 데이터 생성
-│   │   └── dateUtils.ts    # 날짜 처리 (KST/JST 지원)
+│   │   ├── dateUtils.ts    # 날짜 처리 (KST/JST 지원)
+│   │   ├── searchUtils.ts  # 검색 유틸리티
+│   │   └── localStorageBudget.ts # 비로그인 예산 저장
+│   ├── constants/          # 상수 정의
+│   │   └── routes.ts       # 라우트 경로
 │   ├── App.tsx             # 메인 앱 컴포넌트
 │   ├── MainApp.tsx         # 로그인 후 메인 화면
 │   └── main.tsx            # 앱 진입점
-├── docs/                   # 프로젝트 문서
+├── supabase/
+│   └── migrations/         # 데이터베이스 마이그레이션 파일
 ├── public/                 # 정적 파일
-├── tests/                  # 테스트 파일
 ├── .env.example            # 환경 변수 템플릿
 ├── package.json            # 프로젝트 메타데이터
 ├── tsconfig.json           # TypeScript 설정
@@ -526,6 +498,17 @@ working/
 - 카테고리별 지출 분포 (파이 차트)
 - 예산 대비 사용률
 - 최다 지출 카테고리 및 날짜
+
+### 저축 목표 관리
+
+재무 목표를 설정하고 진행 상황을 추적합니다.
+
+**주요 특징:**
+- 목표 금액 및 기한 설정
+- 현재 저축 금액 입력 및 진행률 표시
+- 카테고리별 분류 (여행, 비상금, 교육 등)
+- 목표 달성 시 완료 처리
+- 마감일 기준 정렬 및 관리
 
 ### 다크 모드
 
