@@ -1,0 +1,728 @@
+# 일본 워킹홀리데이 앱 - 다음 개발 단계 가이드
+
+## 📋 현재 프로젝트 상태 (2025년 최신 - 일본 특화 완료)
+
+### ✅ 완료된 기능
+- **🔐 Supabase 인증 시스템 (최신 완료!)**:
+  - ✅ 이메일/비밀번호 로그인 및 회원가입
+  - ✅ 선택적 로그인: 로그인 없이도 앱 사용 가능
+  - ✅ 임시 모드: 비로그인 시 로컬 메모리에만 데이터 저장
+  - ✅ 영구 모드: 로그인 시 Supabase PostgreSQL에 데이터 저장
+  - ✅ 실시간 동기화: Supabase Realtime으로 거래 내역 자동 동기화
+  - ✅ Row Level Security (RLS): 사용자별 데이터 격리
+  - ✅ 사용자 프로필 자동 생성 (profiles 테이블)
+  - ✅ AuthContext 및 트랜잭션 서비스 레이어 구현
+  - ⚠️ Google OAuth: 준비 완료 (설정 필요)
+  - ⚠️ LINE OAuth: 미구현 (향후 추가 예정)
+- **기본 CRUD 기능**: 수입/지출 내역 추가, 조회, 삭제 (Supabase 연동)
+- **🗓️ 고급 캘린더 시스템 (최신 완료!)**:
+  - ✅ 듀얼 뷰 시스템 (요약 보기 ↔ 캘린더 보기)
+  - ✅ 월별 캘린더로 거래 내역 시각화
+  - ✅ 날짜별 수입/지출/순액 표시 (UI 레이아웃 최적화 완료)
+  - ✅ 캘린더에서 직접 거래 추가 기능
+  - ✅ 정확한 날짜 처리 (UTC → 로컬 시간대 버그 수정)
+  - ✅ 오늘 날짜 표시 (Dashboard 상단, 개선된 스타일링)
+  - ✅ 월별 금액 자동 계산 (뷰 모드별 월 기준 자동 전환)
+  - ✅ 개선된 금액 표시 (K/M 축약 제거, 전체 금액 + 쉼표, 통화 단위 후치)
+  - ✅ 거래 내용 미리보기 제거 (UI 레이아웃 문제 해결)
+  - ✅ 날짜 상세 모달 및 접근성 지원
+- **실시간 계산**: 총 수입, 총 지출, 잔액 자동 계산 (다중 통화 지원)
+- **스마트 월별 금액 계산**: 요약 보기(현재 달) / 캘린더 보기(선택한 달) 기준 자동 계산
+- **카테고리 시스템**: 워킹홀리데이 특화 카테고리 분류
+- **반응형 UI**: 데스크톱/모바일 최적화 디자인
+- **TypeScript**: 체계적인 타입 안전성 및 인터페이스 구조
+- **모던 스택**: React 19 + Vite 7 + Tailwind CSS 3.4
+- **다중 통화 시스템**: KRW, USD, JPY 지원 + 실시간 환율 API 연동
+- **컴포넌트 아키텍처**: 모듈화된 컴포넌트 구조 (Dashboard, TransactionForm, TransactionList, Calendar)
+- **상태 관리**: Context API (CurrencyContext, AppModeContext) + 커스텀 훅 (useCurrency, useCurrencyConversion, useCurrencyConverter)
+- **유틸리티 시스템**: 계산, 환율 처리, 통화 포맷팅, 날짜 처리, 캘린더 로직 함수 분리
+- ✅ **이중 모드 시스템**: 가계부와 일본 특화 초기비용 계산기 전환 완료
+- ✅ **🇯🇵 일본 워킹홀리데이 초기비용 계산기** (일본 특화 완료!):
+  - 🎯 **일본 전용 특화**: 기존 5개국 → 일본 집중 개발
+  - 🏙️ **도쿄/오사카 지역별**: 지역별 비용 차등 시스템 구축
+  - 📋 **16개 일본 특화 카테고리**: 필수 8개 + 선택 8개 (재류카드, 국민건강보험 등)
+  - 🏷️ **7개 카테고리 그룹**: 출국전준비, 입국후정착, 주거, 교통, 교육, 생활, 비상
+  - 🇯🇵 **한일 병기 표시**: 모든 카테고리에 일본어 동시 표시
+  - 💱 **JPY 실시간 환율**: KRW↔JPY 실시간 변환 및 계산
+  - ⚡ **빠른 입력 기능**: 최소/평균/최대 비용 원클릭 입력
+- ✅ **듀얼 모드 네비게이션**: 상단 탭을 통한 모드 전환
+
+### 🔄 현재 개발 방향 (Supabase 인증 및 캘린더 시스템 완료 후 업데이트)
+- **🔐 인증 시스템 고도화**: Google/LINE 소셜 로그인, 이메일 인증, 비밀번호 재설정, 2FA (최우선)
+- **📊 통계 및 분석**: 캘린더 기반 월별 생활비 패턴 분석 (차트, 인사이트, 트렌드)
+- **🗓️ 캘린더 시스템 고도화**: 주간/일간 뷰, 거래 직접 편집, 카테고리별 색상 구분
+- **🇯🇵 일본 특화 기능 확장**: 더 많은 일본 지역 (후쿠오카, 삿포로 등) 및 계절별 비용 차이 반영
+- **🌸 사용자 경험**: 일본 워킹홀리데이 체크리스트, 생활 가이드, 절약 팁 제공
+- **🗾 일본어 현지화**: 완전한 일본어 인터페이스 추가
+- **💾 로컬 데이터 마이그레이션**: 비로그인 시 입력한 임시 데이터를 로그인 후 Supabase로 자동 이전
+
+---
+
+## 🔐 Phase 2-E: 인증 시스템 고도화 (최우선 기능)
+
+### 2-E.1 소셜 로그인 구현
+```typescript
+// 구현해야 할 소셜 로그인 제공자
+const SOCIAL_LOGIN_PROVIDERS = [
+  'google',     // Google OAuth 2.0 (준비 완료, 설정 필요)
+  'line',       // LINE Login (일본 특화 - 미구현)
+  'apple',      // Apple Sign In (향후 고려)
+  'kakao',      // Kakao Login (한국 사용자용 - 향후 고려)
+];
+
+// Google OAuth 설정 필요 사항
+const GOOGLE_OAUTH_SETUP = [
+  'Supabase 대시보드에서 Google OAuth 활성화',
+  'Google Cloud Console에서 OAuth 클라이언트 ID 생성',
+  'Redirect URI 설정: {SUPABASE_URL}/auth/v1/callback',
+  'Client ID 및 Secret을 Supabase에 등록',
+  'AuthContext.tsx의 signInWithGoogle() 함수 테스트',
+];
+
+// LINE OAuth 구현 필요 사항
+const LINE_OAUTH_IMPLEMENTATION = [
+  'LINE Developers Console에서 앱 등록',
+  'Supabase에 LINE OAuth Provider 추가 (커스텀 OAuth)',
+  'LINE Login API 통합',
+  'AuthContext에 signInWithLine() 함수 구현',
+  '일본 사용자를 위한 LINE 우선 로그인 UI',
+];
+```
+
+### 2-E.2 이메일 인증 및 비밀번호 관리
+```typescript
+// 구현해야 할 이메일 인증 기능
+const EMAIL_VERIFICATION = [
+  'email_confirmation',          // 회원가입 시 이메일 인증
+  'email_verification_required', // 인증 전 기능 제한
+  'resend_verification',         // 인증 메일 재전송
+  'custom_email_templates',      // 이메일 템플릿 커스터마이징
+];
+
+// 비밀번호 관리 기능
+const PASSWORD_MANAGEMENT = [
+  'forgot_password',             // 비밀번호 찾기
+  'password_reset',              // 비밀번호 재설정
+  'password_change',             // 로그인 상태에서 비밀번호 변경
+  'password_strength_meter',     // 비밀번호 강도 표시기
+  'password_requirements',       // 비밀번호 요구사항 표시
+];
+```
+
+### 2-E.3 계정 관리 페이지
+```typescript
+// 구현해야 할 계정 관리 기능
+interface AccountManagement {
+  profile: {
+    display_name: string;        // 표시 이름 수정
+    avatar_url: string;          // 프로필 이미지 업로드
+    username: string;            // 사용자명 수정
+  };
+
+  security: {
+    change_password: boolean;    // 비밀번호 변경
+    enable_2fa: boolean;         // 2단계 인증 활성화
+    sessions: Session[];         // 활성 세션 목록
+    logout_all: boolean;         // 모든 디바이스에서 로그아웃
+  };
+
+  preferences: {
+    default_currency: CurrencyCode;  // 기본 통화 설정
+    language: 'ko' | 'ja' | 'en';   // 언어 설정
+    theme: 'light' | 'dark';         // 테마 설정
+  };
+
+  data: {
+    export_data: boolean;        // 데이터 내보내기
+    delete_account: boolean;     // 계정 삭제
+  };
+}
+```
+
+### 2-E.4 로컬 데이터 마이그레이션
+```typescript
+// 비로그인 상태에서 입력한 임시 데이터를 로그인 후 Supabase로 이전
+interface LocalDataMigration {
+  detect_local_data: () => boolean;              // 임시 데이터 감지
+  prompt_migration: () => Promise<boolean>;      // 마이그레이션 확인 모달
+  migrate_transactions: () => Promise<void>;     // 거래 내역 이전
+  clear_local_data: () => void;                  // 로컬 데이터 정리
+  rollback_on_error: () => Promise<void>;        // 오류 시 롤백
+}
+
+// 마이그레이션 시나리오
+const MIGRATION_SCENARIOS = [
+  '비로그인으로 10개 거래 입력 → 로그인 시 자동 감지 → 모달 표시 → 사용자 확인 → Supabase 저장',
+  '마이그레이션 중 오류 발생 → 롤백 → 로컬 데이터 유지 → 재시도 옵션',
+  '마이그레이션 성공 → 로컬 데이터 자동 삭제 → 성공 알림',
+];
+```
+
+### 2-E.5 2단계 인증 (2FA)
+```typescript
+// 2FA 구현 (향후 고려)
+const TWO_FACTOR_AUTH = [
+  'totp_setup',                  // TOTP 앱 설정 (Google Authenticator)
+  'backup_codes',                // 백업 코드 생성
+  'sms_verification',            // SMS 인증 (선택사항)
+  'recovery_options',            // 복구 옵션
+];
+```
+
+## 🌏 Phase 2: 데이터 지속성 및 고급 기능 (다음 우선 기능)
+
+### ✅ 완료된 Phase 2 작업들 (Supabase 인증 + 캘린더 시스템 완료!)
+- ✅ **🔐 Supabase 인증 시스템**: 이메일/비밀번호 로그인, 선택적 로그인, 실시간 동기화
+- ✅ **🔐 조건부 데이터 저장**: 로그인 시 Supabase, 비로그인 시 로컬 메모리
+- ✅ **🔐 AuthContext 및 서비스 레이어**: transactionService.ts, AuthContext.tsx 구현
+- ✅ **🔐 Row Level Security (RLS)**: 사용자별 데이터 격리 및 보안
+- ✅ **일본 특화 초기비용 계산기**: 16개 일본 전용 카테고리 및 타입 정의 완료
+- ✅ **도쿄/오사카 지역별 차등 시스템**: JapanRegionSelector, 지역별 비용 범위 자동 조정
+- ✅ **일본 특화 컴포넌트**: JapanCostCategoryCard, JapanCostSummary, JapanRegionSelector 완료
+- ✅ **한일 병기 시스템**: 모든 카테고리에 한국어-일본어 동시 표시
+- ✅ **7개 카테고리 그룹 분류**: 체계적인 비용 분류 및 UI 구성
+- ✅ **JPY 실시간 환율 시스템**: KRW↔JPY 변환 및 계산 완료
+- ✅ **일본 특화 데이터 구조**: japanCostCategories.ts, japanCost.ts 타입 체계 완료
+- ✅ **🗓️ 고급 캘린더 시스템**: 월별 시각화, 날짜별 거래 관리, 듀얼 뷰 시스템
+- ✅ **월별 금액 계산 시스템**: 뷰 모드별 자동 월 기준 전환 및 실시간 계산
+- ✅ **날짜 처리 개선**: UTC → 로컬 시간대 버그 수정, 정확한 날짜 선택
+- ✅ **UI/UX 최적화**: 캘린더 레이아웃 개선, 금액 표시 형식 개선
+
+### 🔄 Phase 2-C: 캘린더 시스템 고도화
+
+#### 2-C.1 캘린더 기능 확장
+```typescript
+// 추가할 캘린더 기능들
+const ADDITIONAL_CALENDAR_FEATURES = [
+  'weekly_view',        // 주간 뷰 추가
+  'daily_view',         // 일간 뷰 추가
+  'inline_editing',     // 캘린더에서 직접 거래 편집
+  'category_colors',    // 카테고리별 색상 구분
+  'recurring_transactions', // 반복 거래 설정
+  'export_calendar',    // 캘린더 데이터 내보내기
+];
+
+// 캘린더 통계 기능
+const CALENDAR_STATISTICS = [
+  '월별_수입지출_트렌드',    // 캘린더 기반 월별 분석
+  '요일별_지출_패턴',       // 요일별 소비 패턴
+  '카테고리별_월별_변화',   // 카테고리별 월간 변화
+  '예산_대비_실제_지출',    // 예산 vs 실제 비교
+];
+```
+
+### 🔄 Phase 2-D: 일본 특화 기능 확장
+
+#### 2-D.1 더 많은 일본 지역 지원
+```typescript
+// 추가할 일본 지역들
+const ADDITIONAL_JAPAN_REGIONS = [
+  'fukuoka',     // 후쿠오카 - 한국과 가까운 지역
+  'sapporo',     // 삿포로 - 겨울 스포츠, 계절성 일자리
+  'nagoya',      // 나고야 - 제조업 중심지
+  'sendai',      // 센다이 - 동북 지역 중심
+  'hiroshima',   // 히로시마 - 서일본 지역
+  'kyoto',       // 교토 - 전통 문화 지역
+];
+```
+
+#### 2-D.2 일본 특화 세부 카테고리 확장
+```typescript
+// 기존 일본 카테고리를 더 세분화
+const EXPANDED_JAPAN_CATEGORIES = [
+  // 계절별 비용
+  '겨울 난방비',        // 지역별 차이 큰 항목
+  '여름 냉방비',        // 에어컨 사용료
+  '계절별 의류비',      // 유니클로, 무지 등 일본 브랜드
+
+  // 일본 생활 특화
+  '일본어 능력시험 (JLPT)',  // N5~N1 레벨별
+  '일본 문화 체험',          // 다도, 꽃꽂이 등
+  '온천/센토 이용료',        // 일본 고유 문화
+  '지역 축제 참가비',        // 마츠리 등
+];
+```
+
+### 우선순위 3: 사용자 경험 개선 (UI/UX 고도화)
+
+#### 3.1 고급 UI 컴포넌트
+- **모달 창**: 삭제 확인, 설정 등
+- **토스트 알림**: 성공/실패 메시지
+- **로딩 상태**: 데이터 처리 중 표시
+- **드래그 앤 드롭**: 카테고리 순서 변경
+
+#### 3.2 필터링 및 검색
+```typescript
+// 구현할 기능들
+interface FilterOptions {
+  type?: 'income' | 'expense' | 'all';
+  category?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  searchKeyword?: string;
+}
+```
+
+---
+
+## 📊 Phase 3: 고급 분석 및 인사이트 기능
+
+### 3.1 차트 라이브러리 도입
+```bash
+# 권장 라이브러리
+npm install recharts  # React 친화적인 차트 라이브러리
+npm install @types/recharts -D
+
+# 또는
+npm install chart.js react-chartjs-2
+```
+
+### 3.2 구현할 통계 기능
+- **월별 지출 트렌드**: 라인 차트
+- **카테고리별 지출 분포**: 파이 차트
+- **수입 vs 지출**: 바 차트
+- **일일/주간/월간 요약**: 대시보드 카드
+
+### 3.3 예산 관리 시스템
+```typescript
+interface Budget {
+  id: string;
+  category: string;
+  amount: number;
+  period: 'weekly' | 'monthly';
+  startDate: string;
+}
+```
+
+---
+
+## 🇯🇵 Phase 4: 일본 워킹홀리데이 특화 기능 확장
+
+### 4.1 다중 통화 시스템 고도화 (기본 기능 완료됨)
+```bash
+# ✅ 이미 구현 완료
+- KRW, USD, JPY 지원
+- 실시간 환율 API 연동 (ExchangeRate-API.com)
+- 1시간마다 자동 갱신
+- 통화별 금액 입력 및 원화 환산
+
+# 🔄 추가 구현 필요
+- 더 많은 통화 지원 (EUR, AUD, CAD, GBP 등)
+- 오프라인 모드를 위한 환율 캐싱
+- 환율 히스토리 추적
+- 수수료 계산기 (ATM, 환전소)
+```
+
+### 4.2 일본 지역별 설정
+```typescript
+interface JapanRegionSettings {
+  region: JapanRegion;
+  currency: 'JPY';
+  locale: 'ja-JP';
+  commonCategories: string[];
+  averageRent: { shareHouse: number; oneRoom: number };
+  averageWage: { partTime: number; fullTime: number };
+  seasonalFactors: {
+    winter: number;  // 겨울 추가 비용 계수
+    summer: number;  // 여름 추가 비용 계수
+  };
+  taxRate: 0.10;   // 일본 소비세 10%
+}
+```
+
+### 4.3 일본 워킹홀리데이 특화 기능
+- **🏦 일본 은행 계좌 개설 가이드**: 필요 서류 및 절차 안내
+- **💴 엔화 현금 관리**: ATM 수수료, 편의점 ATM 위치
+- **📱 일본 생활 필수 앱**: PayPay, Suica, Google Translate 설정 가이드
+- **🏥 일본 의료 시스템**: 병원 이용법, 처방전 시스템
+- **🍜 일본 음식 예산 관리**: 편의점 vs 레스토랑 vs 자취 비용 비교
+- **🚇 일본 대중교통 최적화**: JR Pass, 정기권, IC카드 비용 계산기
+
+---
+
+## 🌐 Phase 5: 고급 기능 및 최적화
+
+### 5.1 PWA (Progressive Web App) 구현
+```bash
+# Vite PWA 플러그인 설치
+npm install vite-plugin-pwa -D
+
+# 기능
+- 오프라인 사용 가능
+- 홈 화면에 앱 추가
+- 푸시 알림 (예산 초과 경고)
+```
+
+### 5.2 일본어 현지화 (i18n)
+```bash
+npm install react-i18next i18next
+
+# 우선 지원 언어 (일본 특화)
+- 한국어 (기본) - 워킹홀리데이 준비자용
+- 일본어 (메인) - 현지 생활용, 완전한 일본어 인터페이스
+- 영어 (보조) - 영어권 사용자 및 국제적 사용
+
+# 일본어 특화 기능
+- 일본 관련 용어의 정확한 번역
+- 일본 행정 용어 (재류카드, 주민등록 등)
+- 일본 생활 용어 (쉐어하우스, 컨비니 등)
+```
+
+### 5.3 성능 최적화
+- **가상화**: 많은 거래 내역 처리
+- **메모이제이션**: 불필요한 재렌더링 방지
+- **코드 분할**: 라우트별 번들 분리
+- **이미지 최적화**: WebP 포맷 사용
+
+---
+
+## 🔧 즉시 시작 가능한 개발 작업 (일본 특화 완료 후 우선순위)
+
+### 🥇 Highest Priority (1주일 소요)
+
+#### 0. 인증 시스템 고도화 🔐 (최우선)
+```bash
+# 소셜 로그인 구현
+1. Google OAuth 설정 및 테스트
+   - Supabase 대시보드에서 Google OAuth 활성화
+   - Google Cloud Console 설정
+   - AuthContext.tsx의 signInWithGoogle() 함수 테스트
+
+2. LINE Login 구현 (일본 특화)
+   - LINE Developers Console 설정
+   - Supabase Custom OAuth Provider 추가
+   - LINE Login API 통합
+   - 일본 사용자 우선 로그인 UI
+
+3. 이메일 인증 시스템
+   - 회원가입 시 이메일 인증 필수화
+   - 이메일 인증 전 기능 제한
+   - 이메일 재전송 기능
+   - 커스텀 이메일 템플릿 (한국어/일본어)
+
+4. 비밀번호 관리
+   - 비밀번호 찾기/재설정 페이지
+   - 비밀번호 변경 기능 (계정 설정)
+   - 비밀번호 강도 표시기
+   - 비밀번호 요구사항 안내
+
+5. 계정 관리 페이지 생성
+   - 프로필 정보 수정 (이름, 아바타, 사용자명)
+   - 보안 설정 (비밀번호 변경, 세션 관리)
+   - 사용자 설정 (기본 통화, 언어, 테마)
+   - 데이터 관리 (내보내기, 계정 삭제)
+
+6. 로컬 데이터 마이그레이션
+   - 비로그인 시 입력한 임시 데이터 감지
+   - 로그인 후 마이그레이션 확인 모달
+   - Supabase로 자동 이전 기능
+   - 오류 처리 및 롤백
+
+7. 2단계 인증 (2FA) - 향후 고려
+   - TOTP 앱 설정
+   - 백업 코드 생성
+   - 복구 옵션
+```
+
+#### 1. 캘린더 및 일본 특화 데이터 지속성 구현 💾
+```bash
+# LocalStorage 기반 일본 특화 데이터 저장
+npm install use-local-storage-state  # 선택사항
+
+# 구현 순서
+1. src/hooks/useLocalStorage.ts - 기본 LocalStorage 훅
+2. src/contexts/PersistenceContext.tsx - 데이터 지속성 관리 (캘린더 + 일본 특화)
+3. 기존 상태 관리에 저장/로드 로직 통합
+4. 캘린더 및 일본 지역별 데이터 마이그레이션 및 백업/복원
+
+# 저장할 데이터
+- 📅 캘린더 가계부 거래 내역 (날짜별 매핑, 다중 통화 지원)
+- 🇯🇵 일본 워킹홀리데이 가계부 거래 내역 (JPY 기준)
+- 🏙️ 도쿄/오사카 지역별 초기비용 계산 결과
+- ⚙️ 사용자 설정 (선택한 일본 지역, 기본 통화, 뷰 모드 등)
+- 💱 JPY 환율 캐시 데이터
+- 📋 일본 생활 체크리스트 진행 상황
+```
+
+#### 2. 캘린더 기반 통계 및 차트 시스템 구축 📊
+```bash
+# Recharts 라이브러리 설치
+npm install recharts @types/recharts
+
+# 구현 순서
+1. src/utils/calendarStatistics.ts - 캘린더 기반 통계 계산 로직
+2. src/components/Charts/ - 범용 차트 컴포넌트들
+3. src/components/StatsDashboard/ - 통계 대시보드 (캘린더 연동)
+4. 가계부 모드에 통계 섹션 추가 (캘린더 뷰와 연동)
+
+# 캘린더 기반 핵심 기능
+- 📅 월별 수입/지출 트렌드 (Line Chart) - 캘린더 데이터 기반
+- 🗓️ 요일별 지출 패턴 분석 (Bar Chart) - 생활 패턴 인사이트
+- 📊 카테고리별 지출 분포 (Pie Chart) - 식비, 교통, 주거 등
+- 📈 캘린더 뷰 월 변경 시 실시간 통계 업데이트
+- 🇯🇵 일본 초기비용 vs 실제지출 비교 분석 (캘린더 연동)
+- 📋 월별 거래 수 및 평균 금액 추이 차트
+```
+
+### 🥈 High Priority (3-5일 소요)
+
+#### 1. 캘린더 시스템 고도화
+```bash
+# 캘린더 기능 확장
+1. 주간 뷰 및 일간 뷰 추가 (현재는 월간 뷰만 지원)
+2. 캘린더에서 거래 직접 편집/삭제 기능
+3. 카테고리별 색상 구분 표시 및 필터링
+4. 반복 거래 설정 기능 (매월 고정비 등)
+5. 캘린더 데이터 CSV/PDF 내보내기
+
+# 캘린더 UI/UX 개선
+- 터치 제스처 지원 (모바일에서 스와이프로 월 이동)
+- 거래 드래그 앤 드롭으로 날짜 변경
+- 캘린더 셀 크기 조절 및 뷰 밀도 설정
+- 키보드 단축키 지원 (화살표로 날짜 이동, Enter로 선택 등)
+- 미니 캘린더 위젯 (사이드바 또는 대시보드에)
+```
+
+#### 2. 일본 초기비용 계산기 고도화
+```bash
+# 일본 특화 기능 확장
+1. 더 많은 일본 지역 추가 (후쿠오카, 삿포로, 나고야, 교토 등)
+2. 계절별 비용 차이 반영 (겨울/여름 에너지비, 의류비 등)
+3. 일본어 능력 레벨별 어학원 비용 차등화 (JLPT N5~N1)
+4. 일본 초기비용 결과 저장 및 지역별 비교 기능
+
+# 일본 특화 UI/UX 개선
+- 일본 지역별 맞춤 생활 가이드 및 절약 팁
+- 도쿄/오사카 비용 차이 시각화 (인포그래픽)
+- 일본 워킹홀리데이 준비 체크리스트 연동
+- 실제 일본 워킹홀리데이 경험자 후기 및 팁
+- 계절별 비용 변화 그래프 (벚꽃철, 여름축제, 겨울 등)
+```
+
+#### 3. 고급 필터링 및 검색 시스템 (캘린더 연동)
+```bash
+# 캘린더 기반 필터링 및 검색
+- 📅 캘린더 날짜 범위 필터 (시작일/종료일 선택)
+- 🗓️ 캘린더에서 드래그로 날짜 범위 선택
+- 📊 카테고리별 필터 (식비, 교통, 주거, 엔터테인먼트 등)
+- 💱 다중 통화 금액 범위 검색 (KRW, JPY, USD)
+- 🔍 거래 내용 키워드 검색 (한국어/일본어/영어)
+- 📈 거래 패턴별 정렬 (주말/평일, 계절별, 요일별)
+
+# 일본 초기비용 계산기 필터링
+- 🇯🇵 일본 지역별 필터 (도쿄, 오사카, 후쿠오카 등)
+- 📋 일본 특화 비용 유형 필터 (출국전준비/입국후정착/주거/교통/교육/생활/비상)
+- 🌸 계절별 초기비용 필터 (입국 시기별)
+- 💾 저장된 일본 지역별 계산 결과 비교 검색
+```
+
+### 🥉 Medium Priority (1-2주 소요)
+
+#### 1. 예산 관리 시스템
+```bash
+# 예산 설정 및 추적
+- 카테고리별 예산 설정 UI
+- 예산 초과 알림 시스템
+- 예산 vs 실제 지출 비교 차트
+- 예산 달성률 표시
+```
+
+#### 2. 고급 필터링 및 검색
+```bash
+# 향상된 데이터 탐색
+- 다중 조건 필터링 (날짜, 카테고리, 금액 범위)
+- 자연어 검색 ("지난달 식비", "100달러 이상")
+- 저장된 필터 프리셋
+- 정렬 및 그룹화 옵션
+```
+
+---
+
+## 📂 권장 개발 순서 (업데이트됨)
+
+### Week 1: 인증 시스템 고도화 (Critical - 최우선)
+- [ ] 🔐 Google OAuth 설정 및 테스트
+  - [ ] Supabase 대시보드에서 Google OAuth 활성화
+  - [ ] Google Cloud Console 설정 완료
+  - [ ] AuthContext의 signInWithGoogle() 함수 테스트
+  - [ ] Google 로그인 UI 추가 (LoginPage)
+- [ ] 🔐 LINE Login 구현 (일본 특화)
+  - [ ] LINE Developers Console 설정
+  - [ ] Supabase Custom OAuth Provider 추가
+  - [ ] LINE Login API 통합
+  - [ ] AuthContext에 signInWithLine() 구현
+  - [ ] LINE 우선 로그인 UI (일본 사용자용)
+- [ ] 📧 이메일 인증 시스템
+  - [ ] 회원가입 시 이메일 인증 필수화
+  - [ ] 이메일 인증 전 기능 제한 로직
+  - [ ] 이메일 재전송 기능
+  - [ ] 커스텀 이메일 템플릿 (한국어/일본어)
+- [ ] 🔑 비밀번호 관리
+  - [ ] 비밀번호 찾기/재설정 페이지 구현
+  - [ ] 비밀번호 변경 기능 (계정 설정)
+  - [ ] 비밀번호 강도 표시기
+- [ ] ⚙️ 계정 관리 페이지
+  - [ ] 프로필 정보 수정 UI
+  - [ ] 보안 설정 UI
+  - [ ] 사용자 설정 UI (기본 통화, 언어)
+- [ ] 💾 로컬 데이터 마이그레이션
+  - [ ] 임시 데이터 감지 로직
+  - [ ] 마이그레이션 확인 모달
+  - [ ] Supabase 자동 이전 기능
+
+### Week 2: 캘린더 기반 통계 및 분석 시스템
+- [ ] Recharts 라이브러리 통합 (캘린더 기반 차트)
+- [ ] 📊 캘린더 기반 통계 계산 로직 구현 (src/utils/calendarStatistics.ts)
+- [ ] 📅 월별 수입/지출 트렌드 차트 (캘린더 데이터 기반)
+- [ ] 🗓️ 요일별 지출 패턴 분석 차트 (Bar Chart)
+- [ ] 📈 카테고리별 지출 분포 파이 차트 (월별 캘린더 연동)
+- [ ] 🇯🇵 일본 초기비용 vs 실제지출 비교 차트 (캘린더 연동)
+- [ ] 📊 통계 대시보드 페이지 구성 (캘린더 뷰와 연동)
+- [ ] 📋 월별 거래 수 및 평균 금액 추이 차트
+
+### Week 3: 캘린더 시스템 고도화 및 일본 초기비용 계산기 확장
+- [ ] 📅 주간 뷰 및 일간 뷰 추가 (현재는 월간 뷰만 지원)
+- [ ] ✏️ 캘린더에서 거래 직접 편집/삭제 기능
+- [ ] 🎨 카테고리별 색상 구분 표시 및 필터링
+- [ ] 🔄 반복 거래 설정 기능 (매월 고정비 등)
+- [ ] 📤 캘린더 데이터 CSV/PDF 내보내기
+- [ ] 🇯🇵 추가 일본 지역 데이터 구축 (도쿄/오사카 → 6개 주요 지역)
+- [ ] 🌸 일본 특화 세부 카테고리 확장 및 분류 (계절별, JLPT 레벨별)
+
+### Week 4: 고급 기능 및 사용자 경험 개선
+- [ ] 🔍 캘린더 기반 고급 필터링 및 검색 시스템
+- [ ] 📱 터치 제스처 지원 (모바일에서 스와이프로 월 이동)
+- [ ] ⌨️ 키보드 단축키 지원 (화살표로 날짜 이동, Enter로 선택 등)
+- [ ] 🗾 일본어 UI 및 토스트 알림 시스템 (일본어 메시지)
+- [ ] 🏁 데이터 내보내기/가져오기 UI 개선 (캘린더 + 일본 특화)
+- [ ] ⚡ 성능 최적화 (캘린더 렌더링, 대용량 데이터 처리)
+- [ ] ♿ 접근성 (A11y) 향상 작업 (캘린더 키보드 네비게이션 등)
+
+---
+
+## 🛠️ 개발 시 주의사항
+
+### 코드 품질 유지
+```bash
+# 매 작업 후 실행
+npm run lint          # ESLint 검사
+npm run type-check     # TypeScript 검사
+npm run format         # Prettier 포맷팅
+```
+
+### 테스트 고려사항
+```bash
+# 향후 테스트 도구 추가 권장
+npm install -D vitest @testing-library/react @testing-library/jest-dom
+
+# 테스트할 주요 기능
+- LocalStorage 저장/로드
+- 계산 로직
+- 컴포넌트 렌더링
+```
+
+### 성능 모니터링
+```bash
+# React DevTools Profiler 활용
+- 렌더링 성능 확인
+- 메모리 누수 체크
+- Bundle 크기 모니터링
+```
+
+---
+
+## 📚 참고 자료
+
+### 추천 학습 자료
+- [React Hooks 공식 문서](https://react.dev/reference/react)
+- [LocalStorage 모범 사례](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+- [Recharts 문서](https://recharts.org/en-US/)
+- [PWA 가이드](https://web.dev/progressive-web-apps/)
+
+### 유용한 도구들
+- [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)
+- [Redux DevTools](https://github.com/reduxjs/redux-devtools) (상태 관리 도입 시)
+- [Bundle Analyzer](https://www.npmjs.com/package/webpack-bundle-analyzer)
+
+---
+
+## 🎯 마일스톤 요약
+
+| Phase | 기간 | 주요 기능 | 난이도 | 상태 |
+|-------|------|-----------|--------|---------|
+| Phase 1 | ✅ 완료 | 기본 CRUD, 다중 통화, 컴포넌트 구조 | ⭐⭐⭐ | ✅ Done |
+| Phase 2A | ✅ 완료 | 초기비용 계산기, 듀얼모드 네비게이션 | ⭐⭐⭐⭐ | ✅ Done |
+| Phase 2B | ✅ 완료 | 캘린더 시스템, 월별 계산, UI 최적화 | ⭐⭐⭐⭐ | ✅ Done |
+| Phase 3 | 1-2주 | 데이터 지속성, 캘린더 기반 통계/차트 | ⭐⭐⭐ | 🔥 Priority |
+| Phase 4 | 2-3주 | 캘린더 고도화, 고급 필터링, 계산기 확장 | ⭐⭐⭐⭐ | 🔄 Next |
+| Phase 5 | 3-4주 | PWA, i18n, 성능 최적화 | ⭐⭐⭐⭐⭐ | 📋 Planned |
+
+---
+
+## 🔍 중요 변경사항 요약
+
+### ✅ 완료된 기능들 (캘린더 시스템 완료!)
+- **🇯🇵 일본 특화 다중 통화 시스템**: KRW, USD, JPY 지원 + JPY 실시간 환율 중심
+- **🏗️ 모듈화된 컴포넌트 아키텍처**: Dashboard, TransactionForm, TransactionList, Calendar, JapanInitialCostCalculator
+- **🔄 Context API**: CurrencyContext, AppModeContext 및 커스텀 훅 시스템
+- **📝 체계적 타입 시스템**: TypeScript 인터페이스 (calendar.ts, transaction.ts, japanCost.ts)
+- ✅ **🗓️ 고급 캘린더 시스템**: 월별 시각화, 날짜별 거래 관리, 듀얼 뷰 완전 구현
+- ✅ **📊 스마트 월별 계산**: 뷰 모드별 자동 월 기준 전환 및 실시간 금액 계산
+- ✅ **🎨 최적화된 UI/UX**: 캘린더 레이아웃 개선, 금액 표시 형식 개선 완료
+- ✅ **🇯🇵 일본 워킹홀리데이 초기비용 계산기**: 도쿄/오사카 지역별, 16개 카테고리 완전 구현
+- ✅ **🔀 듀얼 모드 시스템**: 가계부 ↔️ 일본 특화 비용 계산기 간 완전 전환
+- ✅ **🧭 통합 네비게이션**: 모드별 헤더 및 탭 시스템 완료
+- ✅ **🏷️ 한일 병기 시스템**: 모든 일본 관련 내용에 일본어 동시 표시
+- ✅ **📋 7개 카테고리 그룹**: 출국전준비, 입국후정착, 주거, 교통, 교육, 생활, 비상
+
+### 🔥 다음 최우선 작업 (Supabase 인증 + 캘린더 시스템 완료 후 로드맵)
+1. **🔐 인증 시스템 고도화** - Google/LINE 소셜 로그인, 이메일 인증, 비밀번호 관리, 계정 설정 (최우선)
+2. **💾 로컬 데이터 마이그레이션** - 비로그인 시 입력한 임시 데이터를 로그인 후 Supabase로 자동 이전
+3. **📈 캘린더 기반 통계 및 차트 시스템** - 월별/요일별 분석 및 시각화
+4. **🗓️ 캘린더 시스템 고도화** - 주간/일간 뷰, 거래 직접 편집, 카테고리별 색상
+5. **🇯🇵 일본 지역 확장** - 후쿠오카, 삿포로, 나고야 등 추가 지역
+6. **🌸 일본어 현지화** - 완전한 일본어 인터페이스 구현
+7. **📱 일본 생활 가이드 통합** - 체크리스트, 절약 팁, 현지 정보
+
+### ⚠️ 기술적 고려사항 (Supabase 인증 + 캘린더 시스템 완료 후)
+- **🔐 인증 시스템 고도화**: Google/LINE OAuth, 이메일 인증, 비밀번호 관리, 2FA 구현이 최우선
+- **💾 로컬 데이터 마이그레이션**: 비로그인 시 입력한 임시 데이터를 로그인 후 Supabase로 자동 이전
+- **🔒 보안 강화**: RLS 정책 검증, API 키 보호, XSS/CSRF 방어, 세션 관리
+- **🗓️ 캘린더 성능 최적화**: 대용량 거래 데이터 처리 및 캘린더 렌더링 최적화
+- **📈 통계 차트 성능**: Recharts 기반 실시간 차트 렌더링 및 데이터 처리 최적화
+- **💱 JPY 환율 API 최적화**: KRW↔JPY 중심의 비용 효율성 및 캐싱 전략 개선
+- **🌸 사용자 경험**: 캘린더 + 일본 특화 두 모드 간 일관된 경험 및 일본어 현지화
+- **🗾 확장성**: 더 많은 일본 지역, 캘린더 뷰 모드, 계절별 카테고리 추가를 위한 구조 설계
+- **🏗️ 타입 안전성**: calendar.ts, japanCost.ts, database.ts 타입 시스템 확장 및 인터페이스 개선
+
+### 🎉 Phase 2E 달성 성과 (Supabase 인증 + 캘린더 시스템 완료!)
+- ✅ **🔐 Supabase 인증 시스템**: 이메일/비밀번호 로그인, 선택적 로그인, 실시간 동기화 완전 구현
+- ✅ **🔐 조건부 데이터 저장**: 로그인 시 Supabase PostgreSQL, 비로그인 시 로컬 메모리
+- ✅ **🔐 Row Level Security (RLS)**: 사용자별 데이터 격리 및 보안 완전 구현
+- ✅ **🔐 실시간 동기화**: Supabase Realtime으로 거래 내역 자동 동기화
+- ✅ **🗓️ 고급 캘린더 시스템**: 월별 시각화, 날짜별 거래 관리, 듀얼 뷰가 완벽히 동작
+- ✅ **📊 스마트 월별 계산**: 요약 보기(현재 달) / 캘린더 보기(선택한 달) 자동 전환 완료
+- ✅ **🎨 최적화된 UI/UX**: 캘린더 레이아웃 문제 해결, 금액 표시 형식 개선 완료
+- ✅ **📅 정확한 날짜 처리**: UTC → 로컬 시간대 버그 수정으로 날짜 선택 정확성 확보
+- ✅ **🇯🇵 일본 특화 이중 모드 시스템**: 가계부와 일본 워킹홀리데이 특화 초기비용 계산기가 완벽히 동작
+- ✅ **🏙️ 도쿄/오사카 지역별 데이터**: 실제 일본 워킹홀리데이 준비자들이 사용 가능한 현실적이고 세밀한 데이터
+- ✅ **💱 JPY 실시간 통화 변환**: 모든 일본 관련 계산이 실시간 JPY 환율로 정확히 표시
+- ✅ **🏗️ 모듈화된 아키텍처**: 인증 + 캘린더 + 일본 지역 확장 및 기능 추가가 용이한 모듈화된 구조
+- ✅ **🏷️ 한일 병기 시스템**: 일본 워킹홀리데이에 필요한 모든 용어를 한국어-일본어로 제공
+- ✅ **📋 16개 일본 특화 카테고리**: 재류카드, 국민건강보험 등 일본 고유 항목 완전 구현
+- ✅ **🎯 7개 체계적 그룹 분류**: 출국 전부터 현지 정착까지 단계별 비용 관리
+
+### ⚠️ 미완성 항목 (다음 개발 우선순위)
+- ⚠️ **Google OAuth**: 코드는 준비되었으나 Supabase 및 Google Cloud Console 설정 필요
+- ⚠️ **LINE Login**: 미구현 (일본 특화 기능으로 향후 추가 필요)
+- ⚠️ **이메일 인증**: 회원가입 시 이메일 인증 시스템 미구현
+- ⚠️ **비밀번호 관리**: 비밀번호 찾기/재설정 페이지 미구현
+- ⚠️ **계정 관리 페이지**: 프로필 수정, 보안 설정, 데이터 관리 페이지 미구현
+- ⚠️ **로컬 데이터 마이그레이션**: 비로그인 시 입력한 임시 데이터를 로그인 후 자동 이전 기능 미구현
+- ⚠️ **2단계 인증 (2FA)**: TOTP, 백업 코드 등 미구현 (향후 고려)
+
+---
+
+*이 문서는 2025년 현재 프로젝트 상태를 반영하여 업데이트되었습니다. Phase 2E (Supabase 인증 + 고급 캘린더 시스템)가 완료되어 이제 인증 시스템 고도화 (소셜 로그인, 이메일 인증, 계정 관리)에 집중할 수 있습니다.*
